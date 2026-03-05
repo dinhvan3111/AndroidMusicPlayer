@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MusicPlayerApp.Splash" parent="Theme.SplashScreen">
+        <!-- Background splash -->
+        <item name="windowSplashScreenBackground">@android:color/background_dark</item>
+
+        <!-- Logo giữa màn hình -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_wrapper</item>
+
+        <!-- Theme sau khi splash xong -->
+        <item name="postSplashScreenTheme">@style/Theme.MusicPlayerApp</item>
+    </style>
+</resources>

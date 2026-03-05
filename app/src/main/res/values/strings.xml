@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">MusicPlayerApp</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="explorer_artist">Explorer Artist</string>
+    <string name="song_title">Song Title</string>
+    <string name="artist">Artist</string>
+    <string name="top_song">Top song</string>
+    <string name="personal">Personal</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/exploreArtistFragment"
+        android:icon="@drawable/library_music"
+        android:title="@string/explorer_artist"/>
+    <item android:id="@+id/rankingFragment"
+        android:icon="@drawable/outline_bar_chart"
+        android:title="@string/top_song"/>
+    <item android:id="@+id/personalFragment"
+        android:icon="@drawable/baseline_person"
+        android:title="@string/personal"/>
+</menu>
