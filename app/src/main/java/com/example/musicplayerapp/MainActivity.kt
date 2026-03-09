@@ -19,6 +19,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.example.musicplayerapp.databinding.ActivityMainBinding
 import com.example.musicplayerapp.models.Song
 import com.example.musicplayerapp.ui.PlayerActivity
@@ -101,7 +102,7 @@ class MainActivity : AppCompatActivity() {
                                 Glide.with(this@MainActivity)
                                     .asBitmap()
                                     .load(albumArtUri)
-                                    .circleCrop()
+                                    .transform(RoundedCorners(16))
                                     .placeholder(R.drawable.ic_music_note)
                                     .error(R.drawable.ic_music_note)
                                     .into(binding.miniPlayer.imageSong)
@@ -109,8 +110,7 @@ class MainActivity : AppCompatActivity() {
                                 Glide.with(this@MainActivity)
                                     .asBitmap()
                                     .load(albumArtUri)
-                                    .circleCrop()
-                                    .transform(BlurTransformation(25,3))
+                                    .transform(RoundedCorners(16))
                                     .placeholder(R.drawable.ic_music_note)
                                     .error(R.drawable.ic_music_note)
                                     .into(binding.miniPlayer.imageSong)
