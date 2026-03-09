@@ -7,6 +7,7 @@ import android.os.Handler
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -28,13 +29,13 @@ import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.Player
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class PlayerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityPlayerBinding
-    private lateinit var player : ExoPlayer
     private var handler: Handler = Handler()
-    private lateinit var viewModel : PlayerViewModel
-    private var isUserSeeking : Boolean = false
+    private val viewModel : PlayerViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -57,7 +58,7 @@ class PlayerActivity : AppCompatActivity() {
             finish()
             return
         }
-        viewModel = PlayerViewModel(songList, currentIndex)
+        viewModel.initSongList(songList, currentIndex)
         setupUIScreen()
 
     }
@@ -71,20 +72,19 @@ class PlayerActivity : AppCompatActivity() {
 
         }
         binding.playBtnImage.setOnClickListener {
-            if(player.isPlaying) player.pause() else player.play()
-            updatePlayPauseButtonIcon()
+            viewModel.togglePlayPause()
         }
         binding.btnSkip.setOnClickListener {
-            playNext()
+            viewModel.playNext()
         }
         binding.btnPrevious.setOnClickListener {
-            playPrevious()
+            viewModel.playPrevious()
         }
         binding.btnShuffle.setOnClickListener {
-            toggleShuffle()
+            viewModel.toggleShuffle()
         }
         binding.btnRepeatOnce.setOnClickListener {
-            toggleRepeat()
+            viewModel.toggleRepeat()
         }
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED){
@@ -121,36 +121,9 @@ class PlayerActivity : AppCompatActivity() {
         setUpSong()
     }
 
-    private fun toggleRepeat() {
-        viewModel.toggleRepeat()
-    }
-
-    private fun toggleShuffle() {
-        viewModel.toggleShuffle()
-        setUpSong()
-    }
-
     private fun setUpSeekBar(){
-        player = ExoPlayer.Builder(this).build()
         // Handle set Seekbar max duration
-        player.addListener(object: Player.Listener{
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                updatePlayPauseButtonIcon()
-                if(playbackState == Player.STATE_READY){
-                    binding.seekBar.max = player.duration.toInt()
-                    binding.txtSongDuration.text = Utils.formatDurationTime(
-                        (player.duration / 1000).toInt()
-                    )
-                }
-                else if(playbackState == Player.STATE_ENDED){
-                    if(viewModel.isRepeatValue){
-                        setUpSong()
-                    }else{
-                        playNext()
-                    }
-                }
-            }
-        })
+        updatePlayPauseButtonIcon()
 
         // Handle user drag seekbar
         binding.seekBar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener{
@@ -160,93 +133,97 @@ class PlayerActivity : AppCompatActivity() {
                 fromUser: Boolean
             ) {
                 if(fromUser){
-                    player.seekTo(progress.toLong())
+                    viewModel.seekTo(progress.toLong())
                 }
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {
-                isUserSeeking = true
+                viewModel.userStartTouch()
             }
 
             override fun onStopTrackingTouch(p0: SeekBar?) {
-                isUserSeeking = false
+                viewModel.userStopTouch()
             }
 
         })
     }
 
     private fun setUpSong(){
-        val initSong = viewModel.songList.value[viewModel.currentIndexValue]
-        binding.txtSongTitle.text = initSong.title
-        binding.txtSongArtist.text = initSong.artist
-        val albumArtUri = ContentUris.withAppendedId("content://media/external/audio/albumart".toUri(), initSong.albumId)
-        if(AlbumHelper.hasAlbumArt(this,albumArtUri)) {
-            Glide.with(this)
-                .asBitmap()
-                .load(albumArtUri)
-                .circleCrop()
-                .placeholder(R.drawable.ic_music_note)
-                .error(R.drawable.ic_music_note)
-                .into(binding.imageAlbumArtPlayer)
-
-            Glide.with(this)
-                .asBitmap()
-                .load(albumArtUri)
-                .circleCrop()
-                .transform(BlurTransformation(25,3))
-                .placeholder(R.drawable.ic_music_note)
-                .error(R.drawable.ic_music_note)
-                .into(binding.bgAlbumArt)
-        }
-        else{
-            binding.imageAlbumArtPlayer.setImageResource(R.drawable.ic_music_note)
-            binding.bgAlbumArt.setImageResource(R.drawable.ic_music_note)
-        }
-        val mediaItem = MediaItem.fromUri(initSong.contentUri)
-        player.setMediaItem(mediaItem)
-        player.prepare()
-
         // Auto update seek bar when song is playing
         updateSeekBar()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED){
+                viewModel.currentSong.collect { song ->
+                    binding.txtSongTitle.text = song?.title
+                    binding.txtSongArtist.text = song?.artist
+                    val albumArtUri = ContentUris.withAppendedId("content://media/external/audio/albumart".toUri(), song?.albumId ?: 0L)
+                    if(AlbumHelper.hasAlbumArt(this@PlayerActivity,albumArtUri)) {
+                        Glide.with(this@PlayerActivity)
+                            .asBitmap()
+                            .load(albumArtUri)
+                            .circleCrop()
+                            .placeholder(R.drawable.ic_music_note)
+                            .error(R.drawable.ic_music_note)
+                            .into(binding.imageAlbumArtPlayer)
 
-        player.play()
-
+                        Glide.with(this@PlayerActivity)
+                            .asBitmap()
+                            .load(albumArtUri)
+                            .circleCrop()
+                            .transform(BlurTransformation(25,3))
+                            .placeholder(R.drawable.ic_music_note)
+                            .error(R.drawable.ic_music_note)
+                            .into(binding.bgAlbumArt)
+                    }
+                    else{
+                        binding.imageAlbumArtPlayer.setImageResource(R.drawable.ic_music_note)
+                        binding.bgAlbumArt.setImageResource(R.drawable.ic_music_note)
+                    }
+                }
+            }
+        }
     }
 
     private fun updateSeekBar(){
         lifecycleScope.launch {
-            while (true){
-                // If user is dragging seekbar, do nothing
-                if(!isUserSeeking){
-                    binding.seekBar.progress = player.currentPosition.toInt()
-                    binding.txtCurrentTime.text = Utils.formatDurationTime(
-                        (player.currentPosition / 1000).toInt()
-                    )
+            repeatOnLifecycle(Lifecycle.State.STARTED){
+                launch {
+                    viewModel.currentPosition.collect { currentPosition ->
+                        if(!viewModel.isUserSeeking){
+                            binding.seekBar.progress = currentPosition.toInt()
+                            binding.txtCurrentTime.text = Utils.formatDurationTime(
+                                (currentPosition / 1000).toInt()
+                            )
+                        }
+                    }
                 }
-                delay(500)
+                launch {
+                    viewModel.duration.collect { duration ->
+                        binding.seekBar.max = duration.toInt()
+                        binding.txtSongDuration.text = Utils.formatDurationTime(
+                            (duration / 1000).toInt()
+                        )
+                    }
+                }
             }
         }
     }
 
     private fun updatePlayPauseButtonIcon(){
-        binding.playBtnImage.setImageResource(
-            if(player.isPlaying) R.drawable.ic_baseline_pause
-            else R.drawable.ic_baseline_play_arrow
-        )
-    }
-
-    private fun playNext(){
-        viewModel.playNext()
-        setUpSong()
-    }
-
-    private fun playPrevious(){
-        viewModel.playPrevious()
-        setUpSong()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED){
+                viewModel.isPlaying.collect { isPlaying ->
+                    binding.playBtnImage.setImageResource(
+                        if(isPlaying) R.drawable.ic_baseline_pause
+                        else R.drawable.ic_baseline_play_arrow
+                    )
+                }
+            }
+        }
     }
 
     override fun onStop() {
         super.onStop()
-        player.release()
+//        player?.release()
     }
 }
