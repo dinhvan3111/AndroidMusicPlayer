@@ -5,4 +5,5 @@ import com.example.musicplayerapp.utils.Resource
 
 interface IMusicRepository {
     suspend fun getDownloadedMusicFromDevice() : Resource<List<Song>>
+    suspend fun scanMediaFiles()
 }

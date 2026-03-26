@@ -12,12 +12,15 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.view.DragStartHelper
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.musicplayerapp.R
 import com.example.musicplayerapp.databinding.FragmentMusicLibraryBinding
 import com.example.musicplayerapp.models.Song
@@ -25,7 +28,9 @@ import com.example.musicplayerapp.repositories.MusicRepository
 import com.example.musicplayerapp.ui.viewmodels.MusicLibraryViewModel
 import com.example.musicplayerapp.ui.MusicLibraryViewModelProviderFactory
 import com.example.musicplayerapp.ui.PlayerActivity
-import com.example.musicplayerapp.ui.SongAdapter
+import com.example.musicplayerapp.ui.adapters.DragCallBack
+import com.example.musicplayerapp.ui.adapters.IOnStartDragListener
+import com.example.musicplayerapp.ui.adapters.SongAdapter
 import com.example.musicplayerapp.utils.Resource
 import kotlinx.coroutines.launch
 
@@ -82,13 +87,22 @@ class MusicLibraryFragment : Fragment(R.layout.fragment_music_library){
     }
 
     private fun setUpRecyclerView(){
-        songAdapter = SongAdapter().apply {
+        lateinit var touchHelper: ItemTouchHelper;
+        songAdapter = SongAdapter(object : IOnStartDragListener{
+            override fun onStartDrag(viewHolder: RecyclerView.ViewHolder) {
+                touchHelper.startDrag(viewHolder)
+            }
+        }).apply {
             setOnItemClickListener{selectedSong -> onItemClick(selectedSong)}
         }
         binding.rvListSong.apply {
             adapter = songAdapter
             layoutManager = LinearLayoutManager(activity)
         }
+
+        val dragCallBack = DragCallBack(songAdapter)
+        touchHelper = ItemTouchHelper(dragCallBack)
+        touchHelper.attachToRecyclerView(binding.rvListSong)
     }
     private fun checkPermissionAndLoadSongs(){
         var permission : String

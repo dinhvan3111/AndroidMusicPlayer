@@ -1,8 +1,9 @@
-package com.example.musicplayerapp.ui
+package com.example.musicplayerapp.ui.adapters
 
+import android.annotation.SuppressLint
 import android.content.ContentUris
-import android.net.Uri
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.ViewGroup
 import androidx.core.net.toUri
 import androidx.recyclerview.widget.AsyncListDiffer
@@ -12,8 +13,11 @@ import com.bumptech.glide.Glide
 import com.example.musicplayerapp.R
 import com.example.musicplayerapp.databinding.ItemSongBinding
 import com.example.musicplayerapp.models.Song
+import java.util.Collections
 
-class SongAdapter : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
+class SongAdapter(
+    private val dragListener: IOnStartDragListener
+) : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
     inner class SongViewHolder(val binding: ItemSongBinding) : RecyclerView.ViewHolder(binding.root)
 
     private var onItemClickListener: ((Song) -> Unit)? = null
@@ -51,6 +55,12 @@ class SongAdapter : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
         return differ.currentList.size
     }
 
+    fun moveItem(from: Int, to: Int) {
+        Collections.swap(differ.currentList,from, to);
+        notifyItemMoved(from,to)
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
     override fun onBindViewHolder(
         holder: SongViewHolder,
         position: Int
@@ -67,6 +77,14 @@ class SongAdapter : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
             txtArtist.text = song.artist ?: "Unknown artist"
             root.setOnClickListener {
                 onItemClickListener?.let { it(song) }
+            }
+            draghandleBtn.setOnTouchListener { view, event ->
+                if(event.action == MotionEvent.ACTION_DOWN){
+                    dragListener.onStartDrag(holder)
+                    view.performClick()
+                    return@setOnTouchListener true
+                }
+                false
             }
         }
     }

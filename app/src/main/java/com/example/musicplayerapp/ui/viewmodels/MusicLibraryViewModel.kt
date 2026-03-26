@@ -1,5 +1,7 @@
 package com.example.musicplayerapp.ui.viewmodels
 
+import android.media.MediaScannerConnection
+import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.musicplayerapp.models.Song
@@ -8,6 +10,7 @@ import com.example.musicplayerapp.utils.Resource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 class MusicLibraryViewModel(
     val musicRepository : IMusicRepository
@@ -22,6 +25,7 @@ class MusicLibraryViewModel(
     fun getListDownloadedMusic() = viewModelScope.launch {
         try {
             _downloadedMusicList.value = Resource.Loading()
+            musicRepository.scanMediaFiles()
             val response = musicRepository.getDownloadedMusicFromDevice()
             if(response is Resource.Success){
                 _downloadedMusicList.value = response

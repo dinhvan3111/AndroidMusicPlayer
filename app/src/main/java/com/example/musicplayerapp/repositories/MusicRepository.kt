@@ -4,14 +4,18 @@ import android.Manifest
 import android.content.ContentUris
 import android.content.Context
 import android.content.pm.PackageManager
+import android.media.MediaScannerConnection
 import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
 import androidx.core.content.ContextCompat
 import androidx.core.content.contentValuesOf
 import com.example.musicplayerapp.models.Song
 import com.example.musicplayerapp.utils.Resource
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import java.io.File
 import kotlin.coroutines.coroutineContext
 
 class MusicRepository(
@@ -70,4 +74,23 @@ class MusicRepository(
         Resource.Success(songs)
     }
 
+    private fun getMusicDir(): File? {
+        return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+    }
+
+    override suspend fun scanMediaFiles() = suspendCancellableCoroutine<Unit> { cont ->
+        val musicDir = getMusicDir()
+        val files = musicDir?.listFiles()
+            ?.filter { it.isFile && it.extension.lowercase() in listOf("mp3", "wav", "m4a") }
+            ?.map { it.absolutePath }
+            ?.toTypedArray()
+        if (files.isNullOrEmpty()) {
+            cont.resume(Unit) {}
+            return@suspendCancellableCoroutine
+        }
+
+        MediaScannerConnection.scanFile(context, files, null) { _, _ ->
+            if (!cont.isCompleted) cont.resume(Unit) {}
+        }
+    }
 }
