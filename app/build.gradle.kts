@@ -47,6 +47,7 @@ dependencies {
     val glideVersion = "4.15.1"
     val navigationComponentVersion = "2.7.7"
     val hiltVersion = "2.51"
+    val swiperefreshlayoutVersion = "1.1.0"
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -79,4 +80,6 @@ dependencies {
 
     implementation("com.google.dagger:hilt-android:$hiltVersion")
     ksp("com.google.dagger:hilt-compiler:$hiltVersion")
+
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:$swiperefreshlayoutVersion")
 }

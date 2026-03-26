@@ -30,7 +30,7 @@ class PlayerViewModel @Inject constructor(
 
     val currentPosition: StateFlow<Long> = playerRepository.currentPosition
 
-    private var songList: StateFlow<List<Song>> = playerRepository.songList
+    var songList: StateFlow<List<Song>> = playerRepository.songList
 
     var currentIndex : StateFlow<Int> = playerRepository.currentIndex
 
@@ -82,8 +82,9 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
-    fun playSong(){
-        playerRepository.playIndex(currentIndex.value)
+    fun playSong(index: Int? = null){
+        if(index != null) playerRepository.playIndex(index)
+        else playerRepository.playIndex(currentIndex.value)
     }
 
     fun playNext(){

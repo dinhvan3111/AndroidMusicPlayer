@@ -18,11 +18,11 @@ class MusicLibraryViewModel(
     private val _downloadedMusicList : MutableStateFlow<Resource<List<Song>>> =
         MutableStateFlow(Resource.Loading())
     val downloadedMusicList = _downloadedMusicList.asStateFlow()
-    init {
-//        getListDownloadedMusic()
-    }
+    private val _isLoadingData = MutableStateFlow(false)
+    val isLoadingData = _isLoadingData.asStateFlow()
 
     fun getListDownloadedMusic() = viewModelScope.launch {
+        _isLoadingData.value = true
         try {
             _downloadedMusicList.value = Resource.Loading()
             musicRepository.scanMediaFiles()
@@ -37,14 +37,8 @@ class MusicLibraryViewModel(
         catch (e: Exception){
 
         }
+        finally {
+            _isLoadingData.value = false
+        }
     }
-
-//    private fun hanldeMusicLibraryResponse(response: Response<Song>) : Resource<NewsResponse>{
-//        if(response.isSuccessful){
-//            response.body()?.let { resultResponse ->
-//                return Resource.Success(resultResponse)
-//            }
-//        }
-//        return Resource.Error(response.message())
-//    }
 }

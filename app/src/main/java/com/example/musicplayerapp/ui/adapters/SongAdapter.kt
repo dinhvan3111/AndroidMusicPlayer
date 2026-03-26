@@ -56,7 +56,10 @@ class SongAdapter(
     }
 
     fun moveItem(from: Int, to: Int) {
-        Collections.swap(differ.currentList,from, to);
+        // make a copy of list, it would crash if we pass directly the list (differ.currentList)
+        val current = ArrayList(differ.currentList)
+
+        Collections.swap(current, from, to)
         notifyItemMoved(from,to)
     }
 

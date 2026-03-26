@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MotionScene xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <!-- START STATE -->
+    <ConstraintSet android:id="@+id/start">
+        <Constraint android:id="@id/imageAlbumArtPlayer">
+            <PropertySet android:alpha="1"/>
+        </Constraint>
+
+        <Constraint android:id="@id/txtSongTitle">
+            <PropertySet android:alpha="1"/>
+        </Constraint>
+
+        <Constraint android:id="@id/txtSongArtist">
+            <PropertySet android:alpha="1"/>
+        </Constraint>
+
+        <Constraint android:id="@id/rvListSong">
+            <PropertySet android:alpha="0"/>
+        </Constraint>
+    </ConstraintSet>
+
+    <ConstraintSet android:id="@+id/end">
+        <Constraint android:id="@id/imageAlbumArtPlayer">
+            <PropertySet android:alpha="0"/>
+        </Constraint>
+
+        <Constraint android:id="@id/txtSongTitle">
+            <PropertySet android:alpha="0"/>
+        </Constraint>
+
+        <Constraint android:id="@id/txtSongArtist">
+            <PropertySet android:alpha="0"/>
+        </Constraint>
+
+        <Constraint android:id="@id/rvListSong">
+            <PropertySet android:alpha="1"/>
+        </Constraint>
+    </ConstraintSet>
+
+    <Transition
+        app:constraintSetStart="@+id/start"
+        app:constraintSetEnd="@+id/end"
+        app:duration="300"/>
+</MotionScene>

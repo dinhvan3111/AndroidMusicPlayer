@@ -1,9 +1,11 @@
 package com.example.musicplayerapp.ui
 
 import android.content.ContentUris
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -29,12 +31,19 @@ import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.Player
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.musicplayerapp.ui.adapters.DragCallBack
+import com.example.musicplayerapp.ui.adapters.IOnStartDragListener
+import com.example.musicplayerapp.ui.adapters.SongAdapter
+import com.example.musicplayerapp.utils.Resource
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class PlayerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityPlayerBinding
-    private var handler: Handler = Handler()
+    private lateinit var songAdapter: SongAdapter
     private val viewModel : PlayerViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +73,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun setupUIScreen(){
+        setUpListSongRV()
         setUpSeekBar()
         binding.backBtn.setOnClickListener {
             finish()
@@ -85,6 +95,15 @@ class PlayerActivity : AppCompatActivity() {
         }
         binding.btnRepeatOnce.setOnClickListener {
             viewModel.toggleRepeat()
+        }
+        binding.btnShowListSong.setOnClickListener{
+            val motion = binding.main
+            if(motion.currentState == R.id.start){
+                motion.transitionToState(R.id.end)
+            }
+            else{
+                motion.transitionToState(R.id.start)
+            }
         }
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED){
@@ -119,6 +138,25 @@ class PlayerActivity : AppCompatActivity() {
             }
         }
         setUpSong()
+    }
+
+    private fun setUpListSongRV(){
+        lateinit var touchHelper: ItemTouchHelper;
+        songAdapter = SongAdapter(object : IOnStartDragListener {
+            override fun onStartDrag(viewHolder: RecyclerView.ViewHolder) {
+                touchHelper.startDrag(viewHolder)
+            }
+        }).apply {
+            setOnItemClickListener{selectedSong -> onItemClick(selectedSong)}
+        }
+        binding.rvListSong.apply {
+            adapter = songAdapter
+            layoutManager = LinearLayoutManager(context)
+        }
+        val dragCallBack = DragCallBack(songAdapter)
+        touchHelper = ItemTouchHelper(dragCallBack)
+        touchHelper.attachToRecyclerView(binding.rvListSong)
+        songAdapter.differ.submitList(viewModel.songList.value)
     }
 
     private fun setUpSeekBar(){
@@ -220,6 +258,11 @@ class PlayerActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun onItemClick(selectedSong: Song){
+        val index = songAdapter.differ.currentList.indexOf(selectedSong)
+        viewModel.playSong(index)
     }
 
     override fun onStop() {

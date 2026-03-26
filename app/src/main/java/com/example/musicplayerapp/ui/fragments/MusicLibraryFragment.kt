@@ -67,19 +67,26 @@ class MusicLibraryFragment : Fragment(R.layout.fragment_music_library){
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED){
-                viewModel.downloadedMusicList.collect { value ->
-                    when(value){
-                        is Resource.Success -> {
-                            songAdapter.differ.submitList(value.data)
-                        }
-                        is Resource.Error -> {
-                            value.message?.let {
-                                Log.e(TAG, "An error occured: $it")
+                launch {
+                    viewModel.downloadedMusicList.collect { value ->
+                        when(value){
+                            is Resource.Success -> {
+                                songAdapter.differ.submitList(value.data)
+                            }
+                            is Resource.Error -> {
+                                value.message?.let {
+                                    Log.e(TAG, "An error occured: $it")
+                                }
+                            }
+                            is Resource.Loading -> {
+
                             }
                         }
-                        is Resource.Loading -> {
-
-                        }
+                    }
+                }
+                launch {
+                    viewModel.isLoadingData.collect{isLoading ->
+                        binding.swipeRefresh.isRefreshing = isLoading
                     }
                 }
             }
@@ -98,6 +105,9 @@ class MusicLibraryFragment : Fragment(R.layout.fragment_music_library){
         binding.rvListSong.apply {
             adapter = songAdapter
             layoutManager = LinearLayoutManager(activity)
+        }
+        binding.swipeRefresh.setOnRefreshListener {
+            loadDownloadedSong()
         }
 
         val dragCallBack = DragCallBack(songAdapter)
