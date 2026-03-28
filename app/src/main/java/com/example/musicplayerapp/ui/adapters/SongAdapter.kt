@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.ViewGroup
 import androidx.core.net.toUri
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -16,9 +17,14 @@ import com.example.musicplayerapp.models.Song
 import java.util.Collections
 
 class SongAdapter(
-    private val dragListener: IOnStartDragListener
+    private val dragListener: IOnStartDragListener,
+    private val showDragButton: Boolean = false,
+    private val listHorizontalPadding: Int? = null,
 ) : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
-    inner class SongViewHolder(val binding: ItemSongBinding) : RecyclerView.ViewHolder(binding.root)
+    inner class SongViewHolder(val binding: ItemSongBinding) : RecyclerView.ViewHolder(binding.root){
+        val defaultStart = binding.root.paddingStart
+        val defaultEnd = binding.root.paddingEnd
+    }
 
     private var onItemClickListener: ((Song) -> Unit)? = null
     private val differCallback = object : DiffUtil.ItemCallback<Song>() {
@@ -88,6 +94,18 @@ class SongAdapter(
                     return@setOnTouchListener true
                 }
                 false
+            }
+            showDragButton.let{ isShow ->
+                draghandleBtn.isVisible = isShow
+            }
+            listHorizontalPadding?.let { padding ->
+                    root.setPadding(
+                        padding,
+                        root.paddingTop,
+                        padding,
+                        root.paddingBottom)
+            }?: run {
+                root.setPadding(holder.defaultStart, root.paddingTop, holder.defaultEnd, root.paddingBottom)
             }
         }
     }

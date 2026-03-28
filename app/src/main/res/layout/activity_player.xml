@@ -8,12 +8,6 @@
     app:layoutDescription="@xml/player_scene"
     tools:context=".ui.PlayerActivity">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvListSong"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintBottom_toTopOf="@+id/seekBar"
-        app:layout_constraintTop_toTopOf="@+id/imageAlbumArtPlayer" />
 
     <ImageView
         android:id="@+id/bgAlbumArt"
@@ -28,6 +22,12 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.0" />
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvListSong"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/seekBar"
+        app:layout_constraintTop_toTopOf="@+id/imageAlbumArtPlayer" />
     <ImageView
         android:id="@+id/backBtn"
         android:layout_width="48dp"
@@ -205,19 +205,20 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/playerActionLayout">
-        <ImageView
+        <ImageButton
             android:id="@+id/btnAlarm"
-            android:layout_width="48dp"
+            android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
             android:layout_marginEnd="16dp"
             android:background="@android:color/transparent"
+            android:foreground="@drawable/ripple_rounded"
             android:padding="12dp"
             app:srcCompat="@drawable/sharp_alarm"
             app:tint="@color/white" />
         <ImageView
             android:id="@+id/btnAddSongToList"
-            android:layout_width="48dp"
+            android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
             android:layout_marginEnd="16dp"
@@ -227,7 +228,7 @@
             app:tint="@color/white" />
         <ImageView
             android:id="@+id/btnDownloadSong"
-            android:layout_width="48dp"
+            android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
             android:layout_marginEnd="16dp"
@@ -235,15 +236,19 @@
             android:padding="12dp"
             app:srcCompat="@drawable/rounded_download"
             app:tint="@color/white" />
-        <ImageView
-            android:id="@+id/btnShowListSong"
-            android:layout_width="48dp"
+        <FrameLayout
+            android:layout_width="0dp"
             android:layout_height="48dp"
-            android:layout_weight="1"
-
-            android:background="@android:color/transparent"
-            android:padding="12dp"
-            app:srcCompat="@drawable/outline_list_medium"
-            app:tint="@color/white" />
+            android:layout_weight="1">
+            <ImageButton
+                android:id="@+id/btnShowListSong"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center"
+                android:background="@android:color/transparent"
+                android:padding="12dp"
+                app:srcCompat="@drawable/outline_list_medium"
+                app:tint="@color/white" />
+        </FrameLayout>
     </LinearLayout>
 </androidx.constraintlayout.motion.widget.MotionLayout>

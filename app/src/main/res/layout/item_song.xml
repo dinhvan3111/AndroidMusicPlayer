@@ -40,7 +40,7 @@
         android:layout_marginTop="2dp"
         android:maxLines="1"
         android:text="Artist"
-        android:textColor="#777"
+        android:textColor="#B6B6B6"
         android:textSize="14sp"
         app:layout_constraintEnd_toStartOf="@+id/draghandleBtn"
         app:layout_constraintStart_toEndOf="@+id/imageSongItem"

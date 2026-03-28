@@ -2,6 +2,8 @@ package com.example.musicplayerapp.ui
 
 import android.content.ContentUris
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -100,9 +102,12 @@ class PlayerActivity : AppCompatActivity() {
             val motion = binding.main
             if(motion.currentState == R.id.start){
                 motion.transitionToState(R.id.end)
+                binding.btnShowListSong.background =
+                    ContextCompat.getDrawable(this, R.drawable.rounded_bg_grey)
             }
             else{
                 motion.transitionToState(R.id.start)
+                binding.btnShowListSong.background = ColorDrawable(Color.TRANSPARENT)
             }
         }
         lifecycleScope.launch {
@@ -146,7 +151,7 @@ class PlayerActivity : AppCompatActivity() {
             override fun onStartDrag(viewHolder: RecyclerView.ViewHolder) {
                 touchHelper.startDrag(viewHolder)
             }
-        }).apply {
+        }, true, 50).apply {
             setOnItemClickListener{selectedSong -> onItemClick(selectedSong)}
         }
         binding.rvListSong.apply {
@@ -156,7 +161,11 @@ class PlayerActivity : AppCompatActivity() {
         val dragCallBack = DragCallBack(songAdapter)
         touchHelper = ItemTouchHelper(dragCallBack)
         touchHelper.attachToRecyclerView(binding.rvListSong)
-        songAdapter.differ.submitList(viewModel.songList.value)
+        lifecycleScope.launch {
+            viewModel.songList.collect() { list ->
+                songAdapter.differ.submitList(list)
+            }
+        }
     }
 
     private fun setUpSeekBar(){
