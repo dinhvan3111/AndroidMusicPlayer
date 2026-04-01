@@ -48,6 +48,7 @@ dependencies {
     val navigationComponentVersion = "2.7.7"
     val hiltVersion = "2.51"
     val swiperefreshlayoutVersion = "1.1.0"
+    val materialVersion = "1.11.0"
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -82,4 +83,5 @@ dependencies {
     ksp("com.google.dagger:hilt-compiler:$hiltVersion")
 
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:$swiperefreshlayoutVersion")
+    implementation("com.google.android.material:material:$materialVersion")
 }

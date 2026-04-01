@@ -9,4 +9,6 @@
     <string name="personal">Personal</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="timer_to_turn_off_music">Timer to turn off music</string>
+    <string name="stop_timer">Stop timer</string>
 </resources>

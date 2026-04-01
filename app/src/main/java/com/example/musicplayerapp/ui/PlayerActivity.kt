@@ -2,12 +2,19 @@ package com.example.musicplayerapp.ui
 
 import android.content.ContentUris
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.text.SpannableString
+import android.text.TextPaint
+import android.text.style.ClickableSpan
+import android.text.style.ForegroundColorSpan
 import android.util.Log
+import android.util.TypedValue
+import android.view.View
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -30,31 +37,49 @@ import jp.wasabeef.glide.transformations.BlurTransformation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.Player
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.musicplayerapp.core.components.BaseBottomSheet
+import com.example.musicplayerapp.databinding.BottomSheetTimerMusicLayoutBinding
 import com.example.musicplayerapp.ui.adapters.DragCallBack
 import com.example.musicplayerapp.ui.adapters.IOnStartDragListener
 import com.example.musicplayerapp.ui.adapters.SongAdapter
+import com.example.musicplayerapp.ui.adapters.TimerOptionAdapter
+import com.example.musicplayerapp.ui.viewmodels.TimerEvent
 import com.example.musicplayerapp.utils.Resource
+import com.google.android.material.color.MaterialColors
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class PlayerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityPlayerBinding
     private lateinit var songAdapter: SongAdapter
+    private lateinit var timerBottomSheet: BaseBottomSheet<BottomSheetTimerMusicLayoutBinding>
     private val viewModel : PlayerViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         binding = ActivityPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = false
+            isAppearanceLightNavigationBars = false
+        }
+        // Chỉ xử lý insets cho BottomNavigationView để nó không bị che bởi navigation bar
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { view, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            view.setPadding(
+                view.paddingLeft,
+                view.paddingTop,
+                view.paddingRight,
+                systemBars.bottom
+            )
             insets
         }
 
@@ -75,6 +100,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun setupUIScreen(){
+        setUpTimerOptions()
         setUpListSongRV()
         setUpSeekBar()
         binding.backBtn.setOnClickListener {
@@ -166,6 +192,103 @@ class PlayerActivity : AppCompatActivity() {
                 songAdapter.differ.submitList(list)
             }
         }
+    }
+
+    private fun setUpTimerOptions(){
+        timerBottomSheet =
+            BaseBottomSheet(BottomSheetTimerMusicLayoutBinding::inflate) { binding,sheet ->
+                binding.recyclerTimer.layoutManager = LinearLayoutManager(this)
+                binding.recyclerTimer.adapter =
+                    TimerOptionAdapter(viewModel.timerOptions) { selected ->
+                        viewModel.startTimer(selected)
+                        sheet.dismiss()
+                    }
+                sheet.viewLifecycleOwner.lifecycleScope.launch {
+                    viewModel.selectedTimer.collect{ timer->
+                        if(timer != null){
+                            binding.stopTimer.isVisible = true
+                        }
+                        else{
+                            binding.stopTimer.isVisible = false
+                        }
+                    }
+                }
+                sheet.viewLifecycleOwner.lifecycleScope.launch {
+                    viewModel.remainingTime.collect{ timer->
+                        if(timer != null){
+                            val color = ContextCompat.getColor(
+                                sheet.requireContext(),
+                                R.color.primary_color)
+                            val stopTimerString = "Stop timer "
+                            val stopTimerSpannable =
+                                SpannableString(stopTimerString + Utils.formatDurationTime(
+                                    (timer / 1000).toInt())
+                                )
+                            stopTimerSpannable.setSpan(ForegroundColorSpan(color),
+                                stopTimerString.length, stopTimerSpannable.length,
+                                SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
+                            binding.stopTimer.text = stopTimerSpannable
+                        }
+                    }
+                }
+                sheet.viewLifecycleOwner.lifecycleScope.launch {
+                    viewModel.timerEvent.collect { event ->
+                        when (event) {
+                            is TimerEvent.Started -> {
+                                Toast.makeText(
+                                    sheet.requireContext(),
+                                    "Player will stop after ${event.minutes} minutes",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+
+                            is TimerEvent.Cancelled -> {
+                                Toast.makeText(
+                                    sheet.requireContext(),
+                                    "Timer has been cancelled",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+
+                            is TimerEvent.Finished -> {
+                                Toast.makeText(
+                                    sheet.requireContext(),
+                                    "Timer finished",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+
+                            else -> {}
+                        }
+                    }
+                }
+                binding.stopTimer.setOnClickListener{
+                    stopTimer()
+                }
+            }
+        binding.btnAlarm.setOnClickListener{
+            timerBottomSheet.show(supportFragmentManager,"Sheet")
+        }
+        lifecycleScope.launch {
+            viewModel.selectedTimer.collect{ timer->
+                if(timer != null){
+                    val typedValue = TypedValue()
+                    theme.resolveAttribute(android.R.attr.colorPrimary, typedValue, true)
+                    val color = typedValue.data
+                    binding.btnAlarm.imageTintList =
+                        ColorStateList.valueOf(color)
+                }
+                else{
+                    binding.btnAlarm.imageTintList = null
+                }
+            }
+        }
+    }
+
+    private fun stopTimer(){
+        viewModel.stopTimer()
+        binding.btnAlarm.imageTintList = null
+        timerBottomSheet.dismiss()
     }
 
     private fun setUpSeekBar(){
